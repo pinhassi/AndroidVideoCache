@@ -78,27 +78,27 @@ public class HttpProxyCacheServer {
     }
 
     private void makeSureServerWorks() {
-        int maxPingAttempts = 3;
-        int delay = 200;
-        int pingAttempts = 0;
-        while (pingAttempts < maxPingAttempts) {
-            try {
-                Future<Boolean> pingFuture = socketProcessor.submit(new PingCallable());
-                pinged = pingFuture.get(delay, TimeUnit.MILLISECONDS);
-                if (pinged) {
-                    return;
-                }
-                pingAttempts++;
-                SystemClock.sleep(delay);
-                delay *= 2;
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                Log.e(LOG_TAG, "Error pinging server [attempt: " + pingAttempts + ", timeout: " + delay + "]. ", e);
-            }
-        }
+		int maxPingAttempts = 5;
+		int delay = 200;
+		int pingAttempts = 0;
+		while (pingAttempts < maxPingAttempts) {
+			try {
+				Future<Boolean> pingFuture = socketProcessor.submit(new PingCallable());
+				pinged = pingFuture.get(delay, TimeUnit.MILLISECONDS);
+				if (pinged) {
+					return;
+				}
+				SystemClock.sleep(delay);
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				Log.e(LOG_TAG, "Error pinging server [attempt: " + pingAttempts + ", timeout: " + delay + "]. ", e);
+			}
+			delay *= 2;
+			pingAttempts++;
+		}
 
-        Log.e(LOG_TAG, "Shutdown server… Error pinging server [attempt: " + pingAttempts + ", timeout: " + delay + "]. " +
-                "If you see this message, please, email me danikula@gmail.com");
-        shutdown();
+		Log.e(LOG_TAG, "Shutdown server… Error pinging server [attempt: " + pingAttempts + ", timeout: " + delay + "]. " +
+				"If you see this message, please, email me danikula@gmail.com");
+		shutdown();
     }
 
     private boolean pingServer() throws ProxyCacheException {
@@ -119,6 +119,12 @@ public class HttpProxyCacheServer {
             source.close();
         }
     }
+
+	public boolean existInCache(String strUrl) {
+		File file = fileNameGenerator.generate(strUrl);
+		boolean res = file.exists();
+		return res;
+	}
 
     public String getProxyUrl(String url) {
         if (!pinged) {
